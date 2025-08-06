@@ -45,11 +45,6 @@ Why GETEED?
 - No steep learning curve
 - Fully open-source (GPLv3)
 
-Documentation
--------------
-For advanced features and plugin development, see:
-https://github.com/yourusername/geteed/wiki
-
 Contributing
 ------------
 Issues and pull requests are welcome! 
