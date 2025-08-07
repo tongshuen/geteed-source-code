@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # geteed - A lightweight terminal text editor
-# Copyright (C) 2024 Your Name <your@email>
+# Copyright (C) 2024 童顺 <tongshun@tongshun.tech>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
