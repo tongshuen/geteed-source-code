@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # geteed - A lightweight terminal text editor
-# Copyright (C) 2024 童顺 <tongshun@tongshun.tech>
+# Copyright (C) 2025 童顺<tongshun@tongshun.tech>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,10 +14,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-import curses
-import os
 import sys
+import os
+if os.name == 'nt':  # Windows
+    try:
+        import curses
+    except ImportError:
+        os.system('pip install windows-curses --user')
+        import curses
+import curses
 import re
 import json
 import time
@@ -267,9 +272,9 @@ class TextEditor:
             middle_parts = [self.lines[i] for i in range(start[0] + 1, end[0])]
             
             deleted = (
-                self.lines[start[0]][start[1]:] + '\n' + 
-                '\n'.join(middle_parts) + '\n' + 
-                self.lines[end[0]][:end[1]]
+    self.lines[start[0]][start[1]:] + '\n' +  # 从start位置到行末
+    '\n'.join(middle_parts) + '\n' +          # 中间所有行
+    self.lines[end[0]][:end[1]]               # 结束行从开始到end位置
             )
             
             self.lines = (
@@ -396,6 +401,59 @@ class TextEditor:
                 self.show_message("autopep8 not installed - cannot auto-format", 2)
         else:
             self.show_message(f"Auto-format not supported for {self.current_language}", 2)
+    
+    def new_file(self):
+        if self.modified:
+            self.show_message("Unsaved changes! Press Ctrl+S to save or Ctrl+N again to discard", 2)
+            key = curses.initscr().getch()
+            if key == 19:  # Ctrl+S
+                if not self.save_file():
+                    return
+        
+        self.filename = "untitled.txt"
+        self.lines = [""]
+        self.cursor_x = 0
+        self.cursor_y = 0
+        self.screen_offset_x = 0
+        self.screen_offset_y = 0
+        self.modified = False
+        self.read_only = False
+        self.current_language = self.detect_language()
+        self.show_message("New file created", 2)
+    
+    def open_file(self, stdscr):
+        if self.modified:
+            self.show_message("Unsaved changes! Press Ctrl+S to save or Ctrl+O again to discard", 2)
+            key = stdscr.getch()
+            if key == 19:  # Ctrl+S
+                if not self.save_file():
+                    return
+        
+        self.show_message("Enter filename to open: ", 0)
+        stdscr.refresh()
+        
+        curses.echo()
+        stdscr.addstr(self.screen_height - 1, 20, "")
+        filename = stdscr.getstr().decode('utf-8')
+        curses.noecho()
+        
+        if filename:
+            try:
+                with open(filename, 'r', encoding=self.encoding) as f:
+                    self.filename = filename
+                    self.lines = [line.rstrip('\n') for line in f.readlines()]
+                    if not self.lines:
+                        self.lines = [""]
+                    self.cursor_x = 0
+                    self.cursor_y = 0
+                    self.screen_offset_x = 0
+                    self.screen_offset_y = 0
+                    self.modified = False
+                    self.read_only = False
+                    self.current_language = self.detect_language()
+                    self.show_message(f"Opened {filename}", 2)
+            except Exception as e:
+                self.show_message(f"Error opening file: {str(e)}", 3)
     
     def handle_input(self, stdscr):
         key = stdscr.getch()
@@ -555,11 +613,9 @@ class TextEditor:
         elif key == 20:  # Ctrl+T - Toggle line numbers
             self.show_line_numbers = not self.show_line_numbers
         elif key == 14:  # Ctrl+N - New file
-            self.show_message("New file - Not implemented", 2)
+            self.new_file()
         elif key == 15:  # Ctrl+O - Open file
-            self.show_message("Open file - Not implemented", 2)
-        elif key == 16:  # Ctrl+P - Print
-            self.show_message("Print - Not implemented", 2)
+            self.open_file(stdscr)
         elif key == 23:  # Ctrl+W - Word wrap toggle
             self.line_wrap = not self.line_wrap
             self.show_message(f"Line wrap {'enabled' if self.line_wrap else 'disabled'}", 2)
@@ -755,7 +811,7 @@ class TextEditor:
             "",
             "Macros:",
             "  Ctrl+M        - Toggle macro recording",
-            "  Ctrl+\        - Run macro",
+            "  Ctrl+\\        - Run macro",
             "  ESC           - Cancel recording",
             "",
             "File Operations:",
