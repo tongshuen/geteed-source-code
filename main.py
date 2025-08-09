@@ -16,7 +16,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import sys
 import os
-if os.name == 'nt':  # Windows
+if os.name == 'nt':  # Windows系统
     try:
         import curses
     except ImportError:
